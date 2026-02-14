@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Valentine?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+
+    body{
+      margin:0; min-height:100vh; background:#fff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      display:grid; place-items:center; overflow:hidden;
+    }
+
+    .container{
+      text-align:center; width:min(920px,92vw); padding:40px 0;
+      position:relative; z-index:2;
+    }
+
+    h1{
+      color:#e60026; font-size:clamp(2rem,5vw,3.25rem);
+      margin:0 0 28px; font-weight:900; letter-spacing:.3px;
+    }
+
+    .buttons{
+      display:flex; gap:22px; justify-content:center; align-items:center;
+      flex-wrap:wrap; position:relative; margin-top:10px;
+    }
+
+    .bubble{
+      display:inline-flex; align-items:center; justify-content:center;
+      text-decoration:none; padding:18px 22px; border:2px solid #111;
+      border-radius:999px; background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.10);
+      font-weight:900; font-size:clamp(1.15rem,2.6vw,1.7rem);
+      user-select:none; transform:translateZ(0);
+      transition:transform 220ms ease, box-shadow 220ms ease;
+      white-space:nowrap;
+      position: relative;
+    }
+    .bubble:hover{
+      transform:translateY(-2px);
+      box-shadow:0 14px 28px rgba(0,0,0,.14);
+    }
+
+    .yesBubble{ color:#0a7a2f; }
+    .noBubble { color:#b00020; }
+
+    /* YES temptation vibration driven by CSS variables */
+    #yesBtn{
+      cursor:pointer;
+      --shakePx: 0px;
+      --shakeRot: 0deg;
+    }
+    #yesBtn.tempting{
+      animation: yesJitter 0.14s linear infinite;
+    }
+    @keyframes yesJitter{
+      0%   { transform: translate(0,0) rotate(0deg); }
+      25%  { transform: translate(var(--shakePx), calc(var(--shakePx) * -1)) rotate(calc(var(--shakeRot) * -1)); }
+      50%  { transform: translate(calc(var(--shakePx) * -1), var(--shakePx)) rotate(var(--shakeRot)); }
+      75%  { transform: translate(var(--shakePx), var(--shakePx)) rotate(calc(var(--shakeRot) * -0.6)); }
+      100% { transform: translate(0,0) rotate(0deg); }
+    }
+
+    /* NO roaming */
+    #noBtn{
+      position:fixed; left:68%; top:62%;
+      transform:translate(-50%,-50%) scale(1);
+      z-index:3; cursor:pointer; touch-action:manipulation;
+      opacity:1;
+    }
+
+    /* Background floating hearts */
+    #bgHearts{
+      position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden;
+    }
+    .heartBg{
+      position:absolute; bottom:-40px;
+      font-size:var(--size,22px); opacity:var(--opacity,.5); left:var(--x,50%);
+      filter:blur(var(--blur,0px));
+      transform:translateX(-50%);
+      animation:floatUp var(--dur,10s) linear var(--delay,0s) infinite;
+    }
+    @keyframes floatUp{
+      0%{ transform:translateX(-50%) translateY(0) rotate(0deg); }
+      100%{ transform:translateX(calc(-50% + var(--drift,0px))) translateY(-110vh) rotate(var(--rot,0deg)); }
+    }
+
+    /* Foreground heart particles */
+    #fxLayer{
+      position:fixed; inset:0; pointer-events:none; z-index:50; overflow:hidden;
+    }
+    .fxHeart{
+      position:fixed;
+      opacity:0;
+      animation: fxFloat 950ms ease-out forwards;
+      text-shadow: 0 10px 18px rgba(0,0,0,.12);
+      will-change: transform, opacity;
+    }
+    @keyframes fxFloat{
+      0%   { transform: translate(0,0) scale(0.85); opacity: 0; }
+      15%  { opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(1.25); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="bgHearts" aria-hidden="true"></div>
+  <div id="fxLayer" aria-hidden="true"></div>
+
+  <div class="container">
+    <h1>Pookers... will you be my Valentines....?</h1>
+
+    <div class="buttons" aria-label="Yes or No">
+      <a id="yesBtn" class="bubble yesBubble" href="yes.html">
+        Yes!!!!!! :))
+      </a>
+    </div>
+  </div>
+
+  <a id="noBtn" class="bubble noBubble" href="https://example.com/no" target="_blank" rel="noopener noreferrer">
+    NO :(
+  </a>
+
+  <script>
+    // ---------- Background hearts ----------
+    (function initBgHearts(){
+      const wrap = document.getElementById("bgHearts");
+      const chars = ["❤","💖","💘","💗","💓","💞"];
+      const count = 26;
+      for (let i=0;i<count;i++){
+        const el=document.createElement("div");
+        el.className="heartBg";
+        el.textContent=chars[Math.floor(Math.random()*chars.length)];
+        const x=Math.random()*100;
+        const size=14+Math.random()*28;
+        const opacity=0.16+Math.random()*0.40;
+        const dur=7+Math.random()*11;
+        const delay=Math.random()*8;
+        const drift=(Math.random()*260)-130;
+        const rot=(Math.random()*300)-150;
+        const blur=Math.random()<0.25 ? (0.5+Math.random()*1.6) : 0;
+
+        el.style.setProperty("--x", x+"%");
+        el.style.setProperty("--size", size+"px");
+        el.style.setProperty("--opacity", opacity);
+        el.style.setProperty("--dur", dur+"s");
+        el.style.setProperty("--delay", delay+"s");
+        el.style.setProperty("--drift", drift+"px");
+        el.style.setProperty("--rot", rot+"deg");
+        el.style.setProperty("--blur", blur+"px");
+        wrap.appendChild(el);
+      }
+    })();
+
+    // ---------- YES emits hearts from the bubble itself ----------
+    const yesBtn = document.getElementById("yesBtn");
+    const fxLayer = document.getElementById("fxLayer");
+    const heartChars = ["❤","💖","💘","💗","💓","💞","💕","🩷"];
+    let hoverCount = 0;
+    const baseEmit = 6, emitGrowth = 3, emitCap = 28, totalCap = 240;
+    let totalEmitted = 0;
+
+    function rand(min,max){ return Math.random()*(max-min)+min; }
+
+    function emitHeartsFromBubble(){
+      hoverCount++;
+      const n = Math.min(baseEmit + (hoverCount-1)*emitGrowth, emitCap);
+
+      const r = yesBtn.getBoundingClientRect();
+      const pad = 6;
+
+      for (let i=0;i<n;i++){
+        if (totalEmitted >= totalCap) break;
+        totalEmitted++;
+
+        const h=document.createElement("div");
+        h.className="fxHeart";
+        h.textContent = heartChars[Math.floor(Math.random()*heartChars.length)];
+
+        // Spawn from random points on/inside the bubble, not the cursor
+        const sx = rand(r.left + pad, r.right - pad);
+        const sy = rand(r.top + pad,  r.bottom - pad);
+
+        const angle = rand(0, Math.PI*2);
+        const dist = rand(55, 150);
+        const dx = Math.cos(angle)*dist;
+        const dy = Math.sin(angle)*dist - rand(60, 140);
+
+        h.style.left = sx + "px";
+        h.style.top  = sy + "px";
+        h.style.setProperty("--dx", dx+"px");
+        h.style.setProperty("--dy", dy+"px");
+        h.style.fontSize = rand(16, 36) + "px";
+
+        fxLayer.appendChild(h);
+        setTimeout(()=>h.remove(), 1100);
+      }
+    }
+
+    yesBtn.addEventListener("mouseenter", emitHeartsFromBubble);
+    yesBtn.addEventListener("touchstart", emitHeartsFromBubble, {passive:true});
+
+    // ---------- Sheep-like NO: slower shrink + corner teleport ----------
+    const noBtn = document.getElementById("noBtn");
+
+    let scale = 1.0;
+    let shooCount = 0;
+
+    // Longer chase: slower shrink + more steps
+    const maxShoos = 24;
+    const shrinkPerShoo = 0.032;
+
+    const triggerDist = 170;
+    const glideMs = 860;
+    const shooCooldownMs = 260;
+    const edgePadding = 18;
+
+    // “safety” bias
+    const centerAvoidStrength = 0.65;
+    const cornerAttractStrength = 0.85;
+
+    // If forced into a corner region, teleport to opposite corner
+    const cornerTeleportThreshold = 64;
+
+    let pos = { x: window.innerWidth*0.62, y: window.innerHeight*0.62 };
+
+    noBtn.style.transition =
+      `left ${glideMs}ms ease, top ${glideMs}ms ease, transform ${glideMs}ms ease, opacity 420ms ease`;
+
+    function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+    function applyNoTransform(){
+      noBtn.style.transform = `translate(-50%,-50%) scale(${scale})`;
+    }
+    function placeNo(){
+      noBtn.style.left = pos.x+"px";
+      noBtn.style.top  = pos.y+"px";
+      applyNoTransform();
+    }
+
+    function nearestCornerVector(x,y){
+      const corners = [
+        {x: edgePadding, y: edgePadding},
+        {x: window.innerWidth-edgePadding, y: edgePadding},
+        {x: edgePadding, y: window.innerHeight-edgePadding},
+        {x: window.innerWidth-edgePadding, y: window.innerHeight-edgePadding},
+      ];
+      let best=corners[0], bestD=Infinity;
+      for (const c of corners){
+        const d=(c.x-x)**2 + (c.y-y)**2;
+        if (d<bestD){ bestD=d; best=c; }
+      }
+      const vx=best.x-x, vy=best.y-y;
+      const mag=Math.max(1, Math.hypot(vx,vy));
+      return {x:vx/mag, y:vy/mag};
+    }
+
+    function isNearCorner(x,y){
+      const left = x < cornerTeleportThreshold;
+      const right = x > window.innerWidth - cornerTeleportThreshold;
+      const top = y < cornerTeleportThreshold;
+      const bottom = y > window.innerHeight - cornerTeleportThreshold;
+      return (left && top) || (right && top) || (left && bottom) || (right && bottom);
+    }
+
+    function oppositeCorner(x,y){
+      const left = x < window.innerWidth/2;
+      const top  = y < window.innerHeight/2;
+      // Opposite
+      const nx = left ? (window.innerWidth - edgePadding) : edgePadding;
+      const ny = top  ? (window.innerHeight - edgePadding) : edgePadding;
+      return { x: nx, y: ny };
+    }
+
+    // YES temptation grows with chase length; caps but remains vibrating
+    function updateYesTemptation(){
+      const t = clamp(shooCount / maxShoos, 0, 1);
+
+      // Cap intensity at ~1.0 (but keep vibrating forever once started)
+      const intensity = Math.min(1, t);
+
+      const px  = (0.4 + intensity*3.2).toFixed(2) + "px";
+      const rot = (0.15 + intensity*1.6).toFixed(2) + "deg";
+      yesBtn.style.setProperty("--shakePx", px);
+      yesBtn.style.setProperty("--shakeRot", rot);
+
+      // Start vibrating early and never stop
+      if (shooCount > 0) yesBtn.classList.add("tempting");
+    }
+
+    function shoo(pointerX, pointerY){
+      if (scale<=0 || noBtn.style.display==="none") return;
+
+      const rect=noBtn.getBoundingClientRect();
+      const cx=rect.left+rect.width/2;
+      const cy=rect.top+rect.height/2;
+
+      // away from cursor
+      let dx=cx-pointerX, dy=cy-pointerY;
+      const dist=Math.max(1, Math.hypot(dx,dy));
+      const away={x:dx/dist, y:dy/dist};
+
+      // avoid center
+      const center={x:window.innerWidth/2, y:window.innerHeight/2};
+      let cdx=cx-center.x, cdy=cy-center.y;
+      const cdist=Math.max(1, Math.hypot(cdx,cdy));
+      const fromCenter={x:cdx/cdist, y:cdy/cdist};
+
+      // drift to corner
+      const toCorner=nearestCornerVector(cx,cy);
+
+      // combine
+      let vx = away.x*1.00 + fromCenter.x*centerAvoidStrength + toCorner.x*cornerAttractStrength;
+      let vy = away.y*1.00 + fromCenter.y*centerAvoidStrength + toCorner.y*cornerAttractStrength;
+
+      const vmag=Math.max(1, Math.hypot(vx,vy));
+      vx/=vmag; vy/=vmag;
+
+      // slightly softer steps for longer chase (still responsive)
+      const step = clamp(140 - (dist-55), 70, 175);
+
+      pos.x += vx*step;
+      pos.y += vy*step;
+
+      // keep on-screen
+      const safeW=rect.width*0.55;
+      const safeH=rect.height*0.55;
+      pos.x = clamp(pos.x, edgePadding+safeW, window.innerWidth-edgePadding-safeW);
+      pos.y = clamp(pos.y, edgePadding+safeH, window.innerHeight-edgePadding-safeH);
+
+      // If it gets herded into a corner region, teleport to opposite corner (continue chase)
+      if (isNearCorner(pos.x, pos.y) && scale > 0.22){
+        const op = oppositeCorner(pos.x, pos.y);
+        pos.x = op.x;
+        pos.y = op.y;
+      }
+
+      shooCount++;
+      scale = Math.max(0, scale - shrinkPerShoo);
+
+      placeNo();
+      updateYesTemptation();
+
+      if (shooCount>=maxShoos || scale<=0.18){
+        noBtn.style.opacity="0";
+        noBtn.style.pointerEvents="none";
+        setTimeout(()=>{ noBtn.style.display="none"; }, 460);
+        // YES stays vibrating at capped intensity
+        updateYesTemptation();
+      }
+    }
+
+    let lastShooAt=0;
+    window.addEventListener("mousemove",(e)=>{
+      if (noBtn.style.display==="none") return;
+      const rect=noBtn.getBoundingClientRect();
+      const cx=rect.left+rect.width/2;
+      const cy=rect.top+rect.height/2;
+      const dist=Math.hypot(e.clientX-cx, e.clientY-cy);
+
+      const now=performance.now();
+      if (dist<triggerDist && (now-lastShooAt)>shooCooldownMs){
+        lastShooAt=now;
+        shoo(e.clientX, e.clientY);
+      }
+    });
+
+    window.addEventListener("touchstart",(e)=>{
+      if (!e.touches||e.touches.length===0) return;
+      const t=e.touches[0];
+      shoo(t.clientX, t.clientY);
+    }, {passive:true});
+
+    window.addEventListener("resize",()=>{
+      pos.x = clamp(pos.x, edgePadding+60, window.innerWidth-edgePadding-60);
+      pos.y = clamp(pos.y, edgePadding+40, window.innerHeight-edgePadding-40);
+      placeNo();
+    });
+
+    placeNo();
+    updateYesTemptation();
+  </script>
+</body>
+</html>
