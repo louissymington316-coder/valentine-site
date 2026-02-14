@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>💘</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+
+    body{
+      margin:0; min-height:100vh; overflow:hidden;
+      background:#ff73b9;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      display:grid; place-items:center;
+    }
+
+    /* Background hearts */
+    #heartsBg{
+      position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+    }
+    .heartBg{
+      position:absolute; bottom:-60px;
+      font-size:var(--size,26px);
+      opacity:var(--opacity,.65);
+      left:var(--x,50%);
+      filter:blur(var(--blur,0px));
+      transform:translateX(-50%);
+      animation:floatUp var(--dur,7s) linear var(--delay,0s) infinite;
+      text-shadow:0 6px 18px rgba(0,0,0,.14);
+    }
+    @keyframes floatUp{
+      0%{ transform:translateX(-50%) translateY(0) rotate(0deg); }
+      100%{ transform:translateX(calc(-50% + var(--drift,0px))) translateY(-120vh) rotate(var(--rot,0deg)); }
+    }
+
+    .wrap{
+      z-index:2; width:min(980px,92vw);
+      text-align:center; padding:40px 0;
+      color:#ffeef7;
+      position:relative;
+      display:grid;
+      place-items:center;
+      gap: 14px;
+    }
+
+    .line{
+      font-weight:900;
+      font-size:clamp(1.6rem,4.5vw,2.8rem);
+      color:#fff2fb;
+      text-shadow:0 10px 24px rgba(0,0,0,.18);
+      opacity:0;
+      animation:appearThenFade 6.2s ease forwards;
+      margin:0;
+    }
+    @keyframes appearThenFade{
+      0%{opacity:0;transform:translateY(6px);}
+      12%{opacity:1;transform:translateY(0);}
+      60%{opacity:1;}
+      100%{opacity:0;}
+    }
+
+    /* Slideshow */
+    #slideshow{
+      width:min(760px,92vw);
+      height:min(460px,58vh);
+      position:relative;
+      display:none;
+      border-radius: 18px;
+      overflow:hidden;
+      box-shadow: 0 18px 40px rgba(0,0,0,.18);
+      background: rgba(255,255,255,.10);
+      backdrop-filter: blur(2px);
+      z-index:2;
+    }
+    #slideImg{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:contain;
+      opacity:0;
+      transition: opacity 1700ms ease;
+      padding: 18px;
+    }
+    #slideImg.show{ opacity:1; }
+
+    /* Envelope */
+    .envelope{
+      width:min(420px, 90vw);
+      height:280px;
+      position:relative;
+      cursor:pointer;
+      border-radius:18px;
+      filter:drop-shadow(0 18px 36px rgba(0,0,0,.20));
+      user-select:none;
+      z-index:5;
+    }
+    .envelope:hover{ animation:jitter 0.18s linear infinite; }
+    @keyframes jitter{
+      0%{transform:translate(0,0) rotate(0deg);}
+      25%{transform:translate(1px,-1px) rotate(-0.6deg);}
+      50%{transform:translate(-1px,1px) rotate(0.6deg);}
+      75%{transform:translate(1px,1px) rotate(-0.4deg);}
+      100%{transform:translate(0,0) rotate(0deg);}
+    }
+
+    /* Dock top-left when closed */
+    .dock{
+      position:fixed !important;
+      left:14px; top:14px;
+      transform: scale(0.75) !important;
+      transform-origin: top left;
+      z-index:10;
+      animation:none !important;
+    }
+
+    .env-back{
+      position:absolute; inset:0;
+      background:#ffd1e6;
+      border:2px solid rgba(255,255,255,.65);
+      border-radius:18px; overflow:hidden;
+    }
+    .env-front{
+      position:absolute; left:0; right:0; bottom:0;
+      height:62%;
+      background:#ffb6d6;
+      border-top:2px solid rgba(255,255,255,.65);
+      border-radius:0 0 18px 18px;
+      z-index:3;
+    }
+    .flap{
+      position:absolute; left:0; right:0; top:0;
+      height:62%;
+      background:#ffc3de;
+      transform-origin: top;
+      transform: rotateX(0deg);
+      transition: transform 620ms ease;
+      z-index:4;
+      clip-path: polygon(0 0,100% 0,50% 82%);
+      border-bottom:2px solid rgba(255,255,255,.55);
+    }
+    .seal{
+      position:absolute; left:50%; top:58%;
+      transform:translate(-50%,-50%);
+      width:54px; height:54px; border-radius:999px;
+      background:#ff4fa2;
+      display:grid; place-items:center;
+      color:#fff; font-weight:900;
+      z-index:5;
+      box-shadow:0 10px 18px rgba(0,0,0,.18);
+      transition: opacity 280ms ease;
+    }
+
+    /* Letter: FULL page */
+    .letter{
+      position:absolute;
+      left:50%;
+      bottom:12px;
+      transform: translateX(-50%) translateY(120px);
+      width: calc(100% - 40px);
+      height: 92vh;
+      max-height: 720px;
+      background:#fff7fb;
+      border-radius:16px;
+      border:2px solid rgba(255,255,255,.9);
+      z-index:6;
+      padding: 22px 22px 18px;
+      text-align:left;
+      overflow:auto;
+      color:#5b2745;
+      box-shadow: 0 28px 60px rgba(0,0,0,.22);
+      opacity:0;
+      transition: transform 900ms ease, opacity 520ms ease;
+      pointer-events: none; /* IMPORTANT: closed letter doesn't block clicks */
+    }
+    .letter h2{
+      margin:0 0 10px;
+      font-size:1.15rem;
+      color:#b21f62;
+    }
+    .letter p{
+      margin:0 0 12px;
+      line-height:1.55;
+      font-size:1.02rem;
+      white-space:pre-wrap;
+    }
+    .sig{
+      margin-top:10px;
+      font-weight:900;
+      color:#b21f62;
+      font-size:1.05rem;
+    }
+
+    .open .flap{ transform: rotateX(165deg); }
+    .open .letter{
+      transform: translateX(-50%) translateY(-380px);
+      opacity:1;
+      pointer-events: auto; /* clickable when open */
+    }
+    .open .seal{ opacity:0; }
+
+    .hint{
+      font-weight:800;
+      color:rgba(255,255,255,.92);
+      text-shadow:0 10px 22px rgba(0,0,0,.14);
+      margin: 0;
+    }
+
+    /* Foreground heart flood */
+    #flood{
+      position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden;
+      display:none;
+    }
+    .floodHeart{
+      position:absolute;
+      top:110%;
+      font-size: var(--size, 28px);
+      opacity: var(--opacity, 0.85);
+      left: var(--x, 50%);
+      animation: floodUp var(--dur, 4s) linear var(--delay, 0s) infinite;
+      text-shadow: 0 10px 22px rgba(0,0,0,.16);
+      filter: blur(var(--blur, 0px));
+    }
+    @keyframes floodUp{
+      0%   { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-240vh) rotate(var(--rot, 0deg)); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="heartsBg" aria-hidden="true"></div>
+  <div id="flood" aria-hidden="true"></div>
+
+  <!-- Audio: ensure love.m4a exists in repo root -->
+  <audio id="bgm" src="love.m4a" loop preload="auto"></audio>
+
+  <div class="wrap">
+    <div class="line">Heh, there was never any doubt.</div>
+
+    <div id="slideshow" aria-hidden="true">
+      <img id="slideImg" alt="Memories">
+    </div>
+
+    <!-- Centered envelope initially because wrap is grid place-items:center -->
+    <div id="env" class="envelope" role="button" aria-label="Open letter" tabindex="0">
+      <div class="env-back"></div>
+      <div class="flap"></div>
+      <div class="seal">❤</div>
+
+      <div id="letter" class="letter" aria-hidden="true">
+        <h2>Dear Bella,</h2>
+        <p>Happy Valentines! I know I cannot be there in person, so I thought I would give you something that you can play around with until we next see each other.
+
+I love you, darling. From that first text message, to our last date. You continue to enchant my world, and I am extremely grateful for your companionship. I have no doubt our love will continue to flourish and endure as it already has. Thank you for being my Valentines, and thank you for being my Pookers.</p>
+        <div class="sig">- Louis</div>
+      </div>
+
+      <div class="env-front"></div>
+    </div>
+
+    <div class="hint">Click the envelope 💌 (then click the letter to close)</div>
+  </div>
+
+  <script>
+    // ----- Background hearts -----
+    (function initHeartsBg(){
+      const wrap = document.getElementById("heartsBg");
+      const chars = ["❤","💖","💘","💗","💓","💞","💕","🩷"];
+      const count = 62;
+      function rand(min,max){ return Math.random()*(max-min)+min; }
+      for (let i=0;i<count;i++){
+        const el=document.createElement("div");
+        el.className="heartBg";
+        el.textContent=chars[Math.floor(Math.random()*chars.length)];
+        el.style.setProperty("--x", rand(0,100) + "%");
+        el.style.setProperty("--size", rand(16,44) + "px");
+        el.style.setProperty("--opacity", rand(0.18,0.65));
+        el.style.setProperty("--dur", rand(5.2,11.5) + "s");
+        el.style.setProperty("--delay", rand(0,7.5) + "s");
+        el.style.setProperty("--drift", rand(-220,220) + "px");
+        el.style.setProperty("--rot", rand(-180,180) + "deg");
+        el.style.setProperty("--blur", (Math.random()<0.18 ? rand(0.6,1.8) : 0) + "px");
+        wrap.appendChild(el);
+      }
+    })();
+
+    // ----- Slideshow -----
+    const slideshow = document.getElementById("slideshow");
+    const slideImg = document.getElementById("slideImg");
+
+    const slides = [
+      "IMG_20250919_214014_378.jpg",
+      "IMG_20250928_181340_332.jpg",
+      "IMG_20250929_164834_236.jpg",
+      "IMG_20251011_214133_095.jpg",
+      "IMG-20251121-WA0030.jpg",
+      "IMG-20251121-WA0033.jpg",
+      "IMG-20251121-WA0043.jpg",
+      "IMG-20251121-WA0066.jpg",
+      "IMG-20251122-WA0044.jpg",
+      "IMG_20251213_213841_295.jpg",
+      "IMG_20251220_025546_696.jpg",
+      "IMG-20251121-WA0021.jpg"
+    ];
+    const finalSlide = "IMG-20251121-WA0021.jpg";
+
+    let slideIndex = 0;
+    let slideTimer = null;
+
+    const holdMs = 5200;
+    const fadeOutMs = 1700;
+
+    function showSlideshow(){
+      slideshow.style.display = "block";
+      slideshow.setAttribute("aria-hidden","false");
+      if (!slideTimer){
+        slideIndex = 0;
+        runSlide();
+      }
+    }
+
+    function hideSlideshow(){
+      slideshow.style.display = "none";
+      slideshow.setAttribute("aria-hidden","true");
+      slideImg.classList.remove("show");
+      if (slideTimer){
+        clearTimeout(slideTimer);
+        slideTimer = null;
+      }
+    }
+
+    function setSlide(src){
+      slideImg.classList.remove("show");
+      slideImg.src = src;
+      setTimeout(()=>slideImg.classList.add("show"), 30);
+    }
+
+    function runSlide(){
+      const src = slides[slideIndex];
+
+      if (src === finalSlide){
+        setSlide(src);
+        slideTimer = null;
+        setTimeout(()=>startFlood(), 900);
+        return;
+      }
+
+      setSlide(src);
+
+      slideTimer = setTimeout(() => {
+        slideImg.classList.remove("show");
+        slideTimer = setTimeout(() => {
+          slideIndex = Math.min(slideIndex + 1, slides.length - 1);
+          runSlide();
+        }, fadeOutMs);
+      }, holdMs);
+    }
+
+    // ----- Envelope / letter / audio -----
+    const env = document.getElementById("env");
+    const letter = document.getElementById("letter");
+    const bgm = document.getElementById("bgm");
+
+    let isOpen = false;
+    let isDocked = false;
+    let audioStarted = false;
+
+    async function startAudioFromClick(){
+      if (audioStarted) return;
+      try{
+        await bgm.play();
+        audioStarted = true;
+      }catch(e){
+        // If file path wrong, it will fail; check filename in repo
+      }
+    }
+
+    function openLetter(){
+      isOpen = true;
+      isDocked = false;
+      env.classList.remove("dock");
+      env.classList.add("open");
+      letter.setAttribute("aria-hidden","false");
+      hideSlideshow();
+    }
+
+    function closeLetterDock(){
+      isOpen = false;
+      env.classList.remove("open");
+      letter.setAttribute("aria-hidden","true");
+      env.classList.add("dock");
+      isDocked = true;
+      showSlideshow();
+    }
+
+    function handleEnvelopeClick(){
+      // This is the user gesture: start audio HERE so it always counts.
+      startAudioFromClick();
+
+      // If docked, return to center and open
+      if (isDocked){
+        openLetter();
+        return;
+      }
+      if (!isOpen) openLetter();
+    }
+
+    env.addEventListener("click", handleEnvelopeClick);
+    env.addEventListener("keydown", (e)=>{
+      if (e.key==="Enter" || e.key===" "){
+        e.preventDefault();
+        handleEnvelopeClick();
+      }
+    });
+
+    // Clicking letter closes it (and docks)
+    letter.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      closeLetterDock();
+    });
+
+    // ----- Foreground heart flood -----
+    const flood = document.getElementById("flood");
+    let floodStarted = false;
+
+    function rand(min,max){ return Math.random()*(max-min)+min; }
+
+    function startFlood(){
+      if (floodStarted) return;
+      floodStarted = true;
+      flood.style.display = "block";
+      flood.setAttribute("aria-hidden","false");
+
+      const chars = ["❤","💖","💘","💗","💓","💞","💕","🩷"];
+      const count = 140;
+
+      for (let i=0;i<count;i++){
+        const el = document.createElement("div");
+        el.className = "floodHeart";
+        el.textContent = chars[Math.floor(Math.random()*chars.length)];
+        el.style.setProperty("--x", rand(0,100) + "%");
+        el.style.setProperty("--size", rand(18,56) + "px");
+        el.style.setProperty("--opacity", rand(0.25,0.95));
+        el.style.setProperty("--dur", rand(2.6,5.2) + "s");
+        el.style.setProperty("--delay", rand(0,2.8) + "s");
+        el.style.setProperty("--rot", rand(-220,220) + "deg");
+        el.style.setProperty("--blur", (Math.random()<0.18 ? rand(0.6,1.8) : 0) + "px");
+        flood.appendChild(el);
+      }
+    }
+
+    // Initial state: centered envelope, slideshow hidden
+    hideSlideshow();
+  </script>
+</body>
+</html>
