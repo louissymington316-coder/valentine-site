@@ -1,0 +1,351 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Valentine?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display: grid;
+      place-items: center;
+      overflow: hidden; /* keeps floating hearts tidy */
+    }
+
+    .container {
+      text-align: center;
+      width: min(920px, 92vw);
+      padding: 40px 0;
+      position: relative;
+      z-index: 2; /* above hearts */
+    }
+
+    h1 {
+      color: #e60026;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      margin: 0 0 28px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: lowercase;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 28px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .option {
+      text-decoration: none;
+      border: 2px solid #111;
+      border-radius: 16px;
+      overflow: hidden;
+      width: min(260px, 44vw);
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(0,0,0,.10);
+      transform: translateZ(0);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      user-select: none;
+    }
+
+    .option:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(0,0,0,.14);
+    }
+
+    .option img {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      display: block;
+      background: #f3f3f3;
+    }
+
+    .label {
+      padding: 14px 14px 16px;
+      font-size: 1.3rem;
+      font-weight: 900;
+      background: #fff;
+      letter-spacing: 1px;
+    }
+
+    .yes .label { color: #0a7a2f; }
+    .no  .label { color: #b00020; }
+
+    /* Make NO “runnable” (positioned relative to viewport) */
+    #noBtn {
+      position: fixed; /* lets it run anywhere on screen */
+      left: 50%;
+      top: 50%;
+      transform: translate(calc(50% + 160px), 30px); /* initial offset */
+      z-index: 3;
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+
+    /* YES stays in normal flow */
+    #yesBtn {
+      cursor: pointer;
+    }
+
+    /* Confetti canvas above everything, click-through */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* Floating hearts behind content */
+    #hearts {
+      position: fixed;
+      inset: 0;
+      z-index: 1; /* behind .container */
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .heart {
+      position: absolute;
+      bottom: -40px;
+      font-size: var(--size, 22px);
+      opacity: var(--opacity, 0.5);
+      left: var(--x, 50%);
+      filter: blur(var(--blur, 0px));
+      transform: translateX(-50%);
+      animation: floatUp var(--dur, 10s) linear var(--delay, 0s) infinite;
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translateX(-50%) translateY(0) rotate(0deg); }
+      100% { transform: translateX(calc(-50% + var(--drift, 0px))) translateY(calc(-110vh)) rotate(var(--rot, 0deg)); }
+    }
+
+    @media (max-width: 620px) {
+      .option img { height: 155px; }
+      #noBtn { transform: translate(calc(50% + 0px), 190px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hearts background -->
+  <div id="hearts" aria-hidden="true"></div>
+
+  <!-- Confetti overlay -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="container">
+    <h1>will you be my valentines?</h1>
+
+    <div class="buttons">
+      <!-- YES -->
+      <a id="yesBtn" class="option yes" href="https://example.com/yes" target="_blank" rel="noopener noreferrer">
+        <img src="https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=1200&q=80" alt="Yes">
+        <div class="label">YES</div>
+      </a>
+      <!-- NO is positioned fixed via CSS and moved by JS -->
+      <a id="noBtn" class="option no" href="https://example.com/no" target="_blank" rel="noopener noreferrer">
+        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80" alt="No">
+        <div class="label">NO</div>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // ====== EDIT THESE ======
+    const YES_LINK = "https://example.com/yes";
+    const NO_LINK  = "https://example.com/no";
+    // =======================
+
+    document.getElementById("yesBtn").href = YES_LINK;
+    document.getElementById("noBtn").href  = NO_LINK;
+
+    // ---------- Floating hearts ----------
+    (function initHearts(){
+      const heartsWrap = document.getElementById("hearts");
+      const heartChars = ["❤","💖","💘","💗","💓","💞"];
+      const count = 22;
+
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement("div");
+        el.className = "heart";
+        el.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+
+        const x = Math.random() * 100;               // %
+        const size = 14 + Math.random() * 26;        // px
+        const opacity = 0.18 + Math.random() * 0.45; // 0-1
+        const dur = 7 + Math.random() * 10;          // s
+        const delay = Math.random() * 8;             // s
+        const drift = (Math.random() * 240) - 120;   // px
+        const rot = (Math.random() * 280) - 140;     // deg
+        const blur = Math.random() < 0.25 ? (0.5 + Math.random() * 1.5) : 0;
+
+        el.style.setProperty("--x", x + "%");
+        el.style.setProperty("--size", size + "px");
+        el.style.setProperty("--opacity", opacity);
+        el.style.setProperty("--dur", dur + "s");
+        el.style.setProperty("--delay", delay + "s");
+        el.style.setProperty("--drift", drift + "px");
+        el.style.setProperty("--rot", rot + "deg");
+        el.style.setProperty("--blur", blur + "px");
+
+        heartsWrap.appendChild(el);
+      }
+    })();
+
+    // ---------- NO button runs away ----------
+    const noBtn = document.getElementById("noBtn");
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function moveNoButton(){
+      const rect = noBtn.getBoundingClientRect();
+      const padding = 12;
+
+      // random position within viewport (keep fully visible)
+      const maxX = window.innerWidth  - rect.width  - padding;
+      const maxY = window.innerHeight - rect.height - padding;
+
+      const newX = Math.random() * maxX + padding;
+      const newY = Math.random() * maxY + padding;
+
+      noBtn.style.left = newX + "px";
+      noBtn.style.top  = newY + "px";
+      noBtn.style.transform = "translate(0,0)";
+    }
+
+    // Runs away on hover or when you try to tap it on mobile
+    noBtn.addEventListener("mouseenter", moveNoButton);
+    noBtn.addEventListener("mousemove", (e) => {
+      // If cursor gets close, run
+      const r = noBtn.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top + r.height/2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 120) moveNoButton();
+    });
+    noBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      moveNoButton();
+    }, { passive: false });
+
+    window.addEventListener("resize", () => {
+      // keep it on-screen
+      const r = noBtn.getBoundingClientRect();
+      if (r.right > window.innerWidth || r.bottom > window.innerHeight || r.left < 0 || r.top < 0) {
+        moveNoButton();
+      }
+    });
+
+    // ---------- Confetti on YES hover ----------
+    const canvas = document.getElementById("confettiCanvas");
+    const ctx = canvas.getContext("2d");
+    let W, H, dpr;
+
+    function resizeCanvas(){
+      dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width  = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    let confetti = [];
+    let animId = null;
+
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+
+    function spawnConfettiBurst(x, y){
+      const pieces = 120;
+      for (let i = 0; i < pieces; i++) {
+        confetti.push({
+          x, y,
+          vx: rand(-6, 6),
+          vy: rand(-10, -2),
+          g: rand(0.18, 0.32),
+          size: rand(4, 8),
+          rot: rand(0, Math.PI * 2),
+          vr: rand(-0.22, 0.22),
+          life: rand(55, 95),
+          // random bright-ish color
+          c: `hsl(${Math.floor(rand(0, 360))} 90% 55%)`
+        });
+      }
+      if (!animId) animateConfetti();
+    }
+
+    function animateConfetti(){
+      animId = requestAnimationFrame(animateConfetti);
+      ctx.clearRect(0, 0, W, H);
+
+      confetti = confetti.filter(p => p.life > 0);
+      for (const p of confetti) {
+        p.vy += p.g;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+        p.life -= 1;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.75);
+        ctx.restore();
+      }
+
+      if (confetti.length === 0) {
+        cancelAnimationFrame(animId);
+        animId = null;
+        ctx.clearRect(0, 0, W, H);
+      }
+    }
+
+    const yesBtn = document.getElementById("yesBtn");
+    let confettiCooldown = false;
+
+    yesBtn.addEventListener("mouseenter", () => {
+      if (confettiCooldown) return;
+      confettiCooldown = true;
+
+      const r = yesBtn.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+
+      spawnConfettiBurst(x, y);
+
+      setTimeout(() => confettiCooldown = false, 650);
+    });
+
+    // Optional: confetti on touch (mobile)
+    yesBtn.addEventListener("touchstart", () => {
+      const r = yesBtn.getBoundingClientRect();
+      spawnConfettiBurst(r.left + r.width/2, r.top + r.height/2);
+    }, { passive: true });
+
+    // Place NO initially on-screen nicely
+    moveNoButton();
+  </script>
+</body>
+</html>
+```
