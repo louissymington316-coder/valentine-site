@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Valentine?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .container {
+      text-align: center;
+      width: min(920px, 92vw);
+      padding: 40px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    h1 {
+      color: #e60026;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      margin: 0 0 28px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 22px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      position: relative;
+      margin-top: 10px;
+    }
+
+    .bubble {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      padding: 18px 22px;
+      border: 2px solid #111;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 10px 22px rgba(0,0,0,.10);
+      font-weight: 900;
+      font-size: clamp(1.15rem, 2.6vw, 1.7rem);
+      user-select: none;
+      transform: translateZ(0);
+      transition: transform 220ms ease, box-shadow 220ms ease;
+      white-space: nowrap;
+    }
+
+    .bubble:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(0,0,0,.14);
+    }
+
+    .yesBubble { color: #0a7a2f; }
+    .noBubble  { color: #b00020; }
+
+    #yesBtn { cursor: pointer; }
+
+    #noBtn {
+      position: fixed;
+      left: 68%;
+      top: 62%;
+      transform: translate(-50%, -50%) scale(1);
+      z-index: 3;
+      cursor: pointer;
+      touch-action: manipulation;
+      opacity: 1;
+    }
+
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    #hearts {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .heart {
+      position: absolute;
+      bottom: -40px;
+      font-size: var(--size, 22px);
+      opacity: var(--opacity, 0.5);
+      left: var(--x, 50%);
+      filter: blur(var(--blur, 0px));
+      transform: translateX(-50%);
+      animation: floatUp var(--dur, 10s) linear var(--delay, 0s) infinite;
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translateX(-50%) translateY(0) rotate(0deg); }
+      100% { transform: translateX(calc(-50% + var(--drift, 0px))) translateY(-110vh) rotate(var(--rot, 0deg)); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="hearts" aria-hidden="true"></div>
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="container">
+    <h1>Pookers... will you be my Valentines....?</h1>
+
+    <div class="buttons" aria-label="Yes or No">
+      <a id="yesBtn" class="bubble yesBubble" href="yes.html">
+        Yes!!!!!! :))
+      </a>
+    </div>
+  </div>
+
+  <a id="noBtn" class="bubble noBubble" href="https://example.com/no" target="_blank" rel="noopener noreferrer">
+    NO :(
+  </a>
+
+  <script>
+    // ---------- Floating hearts ----------
+    (function initHearts(){
+      const heartsWrap = document.getElementById("hearts");
+      const heartChars = ["❤","💖","💘","💗","💓","💞"];
+      const count = 24;
+
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement("div");
+        el.className = "heart";
+        el.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+
+        const x = Math.random() * 100;
+        const size = 14 + Math.random() * 28;
+        const opacity = 0.16 + Math.random() * 0.40;
+        const dur = 7 + Math.random() * 11;
+        const delay = Math.random() * 8;
+        const drift = (Math.random() * 260) - 130;
+        const rot = (Math.random() * 300) - 150;
+        const blur = Math.random() < 0.25 ? (0.5 + Math.random() * 1.6) : 0;
+
+        el.style.setProperty("--x", x + "%");
+        el.style.setProperty("--size", size + "px");
+        el.style.setProperty("--opacity", opacity);
+        el.style.setProperty("--dur", dur + "s");
+        el.style.setProperty("--delay", delay + "s");
+        el.style.setProperty("--drift", drift + "px");
+        el.style.setProperty("--rot", rot + "deg");
+        el.style.setProperty("--blur", blur + "px");
+
+        heartsWrap.appendChild(el);
+      }
+    })();
+
+    // ---------- Confetti on YES hover ----------
+    const canvas = document.getElementById("confettiCanvas");
+    const ctx = canvas.getContext("2d");
+    let W, H, dpr;
+
+    function resizeCanvas(){
+      dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width  = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    let confetti = [];
+    let animId = null;
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+
+    function spawnConfettiBurst(x, y){
+      const pieces = 120;
+      for (let i = 0; i < pieces; i++) {
+        confetti.push({
+          x, y,
+          vx: rand(-6, 6),
+          vy: rand(-10, -2),
+          g: rand(0.18, 0.32),
+          size: rand(4, 8),
+          rot: rand(0, Math.PI * 2),
+          vr: rand(-0.22, 0.22),
+          life: rand(55, 95),
+          c: `hsl(${Math.floor(rand(0, 360))} 90% 55%)`
+        });
+      }
+      if (!animId) animateConfetti();
+    }
+
+    function animateConfetti(){
+      animId = requestAnimationFrame(animateConfetti);
+      ctx.clearRect(0, 0, W, H);
+      confetti = confetti.filter(p => p.life > 0);
+
+      for (const p of confetti) {
+        p.vy += p.g;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+        p.life -= 1;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.75);
+        ctx.restore();
+      }
+
+      if (confetti.length === 0) {
+        cancelAnimationFrame(animId);
+        animId = null;
+        ctx.clearRect(0, 0, W, H);
+      }
+    }
+
+    const yesBtn = document.getElementById("yesBtn");
+    let confettiCooldown = false;
+    yesBtn.addEventListener("mouseenter", () => {
+      if (confettiCooldown) return;
+      confettiCooldown = true;
+      const r = yesBtn.getBoundingClientRect();
+      spawnConfettiBurst(r.left + r.width/2, r.top + r.height/2);
+      setTimeout(() => confettiCooldown = false, 650);
+    });
+
+    // ---------- Sheep-like NO mechanic (seeks corners/edges, avoids center) ----------
+    const noBtn = document.getElementById("noBtn");
+    let scale = 1.0;
+    let shooCount = 0;
+    const maxShoos = 11;
+    const shrinkPerShoo = 0.09;
+
+    const triggerDist = 165;      // how close cursor must get
+    const glideMs = 820;          // slower glide
+    const shooCooldownMs = 280;   // prevents frantic spam
+    const edgePadding = 18;
+
+    // "Safety" parameters
+    const centerAvoidStrength = 0.65; // higher = avoids center more
+    const cornerAttractStrength = 0.75; // higher = prefers corners more
+
+    let pos = { x: window.innerWidth * 0.62, y: window.innerHeight * 0.62 };
+
+    noBtn.style.transition =
+      `left ${glideMs}ms ease, top ${glideMs}ms ease, transform ${glideMs}ms ease, opacity 420ms ease`;
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function applyNoTransform(){
+      noBtn.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    function placeNo(){
+      noBtn.style.left = pos.x + "px";
+      noBtn.style.top  = pos.y + "px";
+      applyNoTransform();
+    }
+
+    function nearestCornerVector(x, y) {
+      const corners = [
+        {x: edgePadding, y: edgePadding},
+        {x: window.innerWidth - edgePadding, y: edgePadding},
+        {x: edgePadding, y: window.innerHeight - edgePadding},
+        {x: window.innerWidth - edgePadding, y: window.innerHeight - edgePadding},
+      ];
+      let best = corners[0];
+      let bestD = Infinity;
+      for (const c of corners) {
+        const d = (c.x - x)**2 + (c.y - y)**2;
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      const vx = best.x - x;
+      const vy = best.y - y;
+      const mag = Math.max(1, Math.hypot(vx, vy));
+      return { x: vx / mag, y: vy / mag };
+    }
+
+    function shoo(pointerX, pointerY){
+      if (scale <= 0 || noBtn.style.display === "none") return;
+
+      const rect = noBtn.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top  + rect.height/2;
+
+      // Base: move away from cursor (shepherd pushing)
+      let dx = cx - pointerX;
+      let dy = cy - pointerY;
+      const dist = Math.max(1, Math.hypot(dx, dy));
+      let away = { x: dx / dist, y: dy / dist };
+
+      // Bias 1: avoid center
+      const center = { x: window.innerWidth/2, y: window.innerHeight/2 };
+      let cdx = cx - center.x;
+      let cdy = cy - center.y;
+      const cdist = Math.max(1, Math.hypot(cdx, cdy));
+      const fromCenter = { x: cdx / cdist, y: cdy / cdist };
+
+      // Bias 2: drift toward nearest corner ("safety")
+      const toCorner = nearestCornerVector(cx, cy);
+
+      // Combine vectors
+      let vx =
+        away.x * 1.00 +
+        fromCenter.x * centerAvoidStrength +
+        toCorner.x * cornerAttractStrength;
+
+      let vy =
+        away.y * 1.00 +
+        fromCenter.y * centerAvoidStrength +
+        toCorner.y * cornerAttractStrength;
+
+      const vmag = Math.max(1, Math.hypot(vx, vy));
+      vx /= vmag; vy /= vmag;
+
+      // Step size: closer cursor => stronger nudge, but still smooth
+      const step = clamp(150 - (dist - 50), 75, 190);
+
+      pos.x += vx * step;
+      pos.y += vy * step;
+
+      // Keep on-screen considering current bubble size
+      const safeW = rect.width * 0.55;
+      const safeH = rect.height * 0.55;
+      pos.x = clamp(pos.x, edgePadding + safeW, window.innerWidth  - edgePadding - safeW);
+      pos.y = clamp(pos.y, edgePadding + safeH, window.innerHeight - edgePadding - safeH);
+
+      shooCount += 1;
+      scale = Math.max(0, scale - shrinkPerShoo);
+
+      placeNo();
+
+      if (shooCount >= maxShoos || scale <= 0.15) {
+        noBtn.style.opacity = "0";
+        noBtn.style.pointerEvents = "none";
+        setTimeout(() => { noBtn.style.display = "none"; }, 460);
+      }
+    }
+
+    let lastShooAt = 0;
+    window.addEventListener("mousemove", (e) => {
+      if (noBtn.style.display === "none") return;
+
+      const rect = noBtn.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top + rect.height/2;
+      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+
+      const now = performance.now();
+      if (dist < triggerDist && (now - lastShooAt) > shooCooldownMs) {
+        lastShooAt = now;
+        shoo(e.clientX, e.clientY);
+      }
+    });
+
+    window.addEventListener("touchstart", (e) => {
+      if (!e.touches || e.touches.length === 0) return;
+      const t = e.touches[0];
+      shoo(t.clientX, t.clientY);
+    }, { passive: true });
+
+    window.addEventListener("resize", () => {
+      pos.x = clamp(pos.x, edgePadding + 60, window.innerWidth  - edgePadding - 60);
+      pos.y = clamp(pos.y, edgePadding + 40, window.innerHeight - edgePadding - 40);
+      placeNo();
+    });
+
+    placeNo();
+  </script>
+</body>
+</html>
